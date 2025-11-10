@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Form Data Pengunjung Hotel</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- === HALAMAN LOGIN === -->
+  <div class="card" id="loginCard">
+    <div class="header-img"></div>
+    <div class="content">
+      <h2>🔒 Login Akses Data</h2>
+      <form id="loginForm">
+        <label>Masukkan Password</label>
+        <input type="password" id="passwordInput" placeholder="Ketik password..." required>
+        <button type="submit">Masuk</button>
+      </form>
+      <div id="loginStatus"></div>
+    </div>
+  </div>
+
+  <!-- === HALAMAN FORM UTAMA === -->
+  <div class="card" id="mainCard" style="display:none;">
+    <div class="header-img"></div>
+    <div class="content">
+      <h2>📋 Data Pengunjung Hotel</h2>
+      <form id="dataForm">
+        <label>Waktu</label>
+        <input type="text" id="timestamp" readonly>
+
+        <label>Nama Pengunjung</label>
+        <input type="text" id="nama" placeholder="Masukkan nama" required>
+
+        <label>Nama Hotel</label>
+        <input type="text" id="hotel" placeholder="Masukkan nama hotel" required>
+
+        <button type="submit">Kirim Data</button>
+      </form>
+      <div id="status"></div>
+    </div>
+  </div>
+
+  <script>
+  // === URL Google Apps Script ===
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwq6bnDyQ3_pw3CbCocK192kRVXRO6_EBs4TNCXqNsPnqNCvgSmfnP9bF_0bI4s6abf9w/exec';
+  
+  // === PASSWORD AKSES ===
+  const PASSWORD_BENAR = 'admin123'; // ← ubah password di sini
+  
+  const loginForm = document.getElementById('loginForm');
+  const loginCard = document.getElementById('loginCard');
+  const mainCard = document.getElementById('mainCard');
+  const loginStatus = document.getElementById('loginStatus');
+
+  loginForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const inputPass = document.getElementById('passwordInput').value;
+    if (inputPass === PASSWORD_BENAR) {
+      loginCard.style.display = 'none';
+      mainCard.style.display = 'block';
+    } else {
+      loginStatus.textContent = '❌ Password salah. Coba lagi!';
+      loginStatus.className = 'error show';
+    }
+  });
+
+  // === FORM DATA KE GOOGLE SHEET ===
+  const form = document.getElementById('dataForm');
+  const timestamp = document.getElementById('timestamp');
+  const statusEl = document.getElementById('status');
+
+  function updateTime() {
+    const now = new Date();
+    timestamp.value = now.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+  }
+  setInterval(updateTime, 1000);
+  updateTime();
+
+  function showStatus(message, type) {
+    statusEl.innerHTML = message;
+    statusEl.className = type + ' show';
+  }
+  function showLoading() {
+    showStatus('<span class="loader"></span> Mengirim data...', 'loading');
+  }
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    showLoading();
+
+    const data = {
+      timestamp: timestamp.value,
+      nama: document.getElementById('nama').value,
+      hotel: document.getElementById('hotel').value
+    };
+
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    .then(() => {
+      showStatus('✅ Data berhasil dikirim!', 'success');
+      form.reset();
+      updateTime();
+    })
+    .catch(() => {
+      showStatus('❌ Gagal mengirim data.', 'error');
+    });
+  });
+  </script>
+</body>
+</html>
